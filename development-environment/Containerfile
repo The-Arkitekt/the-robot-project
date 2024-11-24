@@ -1,0 +1,51 @@
+FROM archlinux:latest
+
+# Use bash instead of sh to be able to use process substitution in RUN commands.
+SHELL ["/bin/bash", "-c"]
+
+# Install software!
+RUN pacman -Syu --noconfirm
+RUN pacman -S --noconfirm \
+  git   \
+  gcc   \
+  cmake \
+  code  \
+  xterm
+ 
+ARG USERID
+ARG GROUPID
+ARG USERNAME
+
+# Create the user
+RUN \
+  groupadd -g $GROUPID $USERNAME && \
+  useradd -u $USERID -g $GROUPID --create-home --home-dir /home/$USERNAME -s /bin/bash $USERNAME && \
+  chown -R $USERNAME:$USERNAME /home/$USERNAME
+
+USER $USERNAME
+
+ARG FULLNAME
+ARG EMAIL
+
+# Git config
+RUN \
+  git config --global user.name "$FULLNAME" && \
+  git config --global user.email "$EMAIL"
+
+ARG BASHRC
+
+# Nice .bashrc and .profile
+RUN \
+  touch ~/.bashrc && \
+  chmod 700 ~/.bashrc && \
+  echo 'cd $HOME' >> ~/.bashrc && \
+  echo "$BASHRC" >> ~/.bashrc
+
+# Mount points
+RUN \
+mkdir ~/source && \
+chmod 700 ~/source
+
+
+# Start VsCode
+CMD ["xterm"]
